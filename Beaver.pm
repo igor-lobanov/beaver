@@ -27,7 +27,7 @@ sub startup {
             css_path  => $app->home . '/public/css/cache',
             css_url   => '/css/cache',
         },
-        default_controller    => 'root',
+        default_entity    => 'home',
     });
     my $bconf = $app->config->{beaver};
 
@@ -36,11 +36,12 @@ sub startup {
     $app->plugin('Widgets', $bconf->{widgets}) if $bconf->{widgets};
     $app->plugin('AssetLoader', $bconf->{asset_loader}) if $bconf->{asset_loader};
     $app->plugin('Model');
+    $app->plugin('URL');
 
     # main routing engine
     my $re_controller = qr/[a-z][a-z0-9_-]{3,}/;
     my $re_action     = qr/[a-z][a-z0-9_]*/;
-    my %to = (controller => $bconf->{default_controller}, action => 'Handler');
+    my %to = (controller => $bconf->{default_entity}, action => 'Handler');
     $app->routes->any('/')->to(%to);
     $app->routes->any('/:controller' => [controller => qr/$re_controller/])->to(%to);
     $app->routes->any('/:controller/:sub' => [controller => qr/$re_controller/, sub => qr/$re_action/])->to(%to);
