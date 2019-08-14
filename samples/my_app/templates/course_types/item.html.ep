@@ -1,0 +1,56 @@
+% layout 'bootstrap3';
+% title 'School';
+<%= widget form => {
+    -label      => 'Курсы',
+    -readonly   => 1,
+    -buttons    => [
+        {
+            -default    => 'update',
+            -actions    => [qw(edit)],
+            -label      => 'Сохранить',
+        },
+        {
+            -default    => 'edit',
+            -actions    => [qw(item)],
+            -label      => 'Редактировать',
+        },
+        {
+            -tag        => 'a',
+            -context    => 'danger',
+            href        => sub { join '/', '', $_[0]->entity, ($_[0]->action eq 'edit' ? $_[0]->id : ()) },
+            -actions    => [qw(item edit)],
+            -label      => 'Назад',
+        },
+    ],
+    -fields     => [[
+        [
+            'form-input'    => {
+                name       => 'label',
+                -label      => 'Название',
+                -col        => {md => 4},
+                _form       => [qw(form-update form-copy)],
+            }
+        ],
+        [
+            'form-textarea'    => {
+                name        => 'description',
+                -label      => 'Описание',
+                -col        => {md => 4},
+                rows        => 5,
+                _form       => [qw(form-update form-copy)],
+            }
+        ],
+        [
+            'form-select'   => {
+                name    => 'type',
+                -label  => 'Тип',
+                -col    => {md => 4},
+                _form   => [qw(form-update form-copy)],
+                -values => $D->{voc}{types},
+            }
+        ],
+    ]],
+    -data       => $D,
+    -readonly   => sub {$_[0]->action ne 'edit'},
+} => begin %>
+<% end %>

@@ -1,0 +1,10 @@
+{
+    secrets => ['ede245af4b4268a3b0c6fded72aa5055a8dae2a8'],
+    beaver  => {
+        default_entity => 'home',
+        backends  => {
+            SQLite1 => 'sqlite:/var/www/mojo/my_app/db/my_app.db',
+            Pg1 => 'postgres://my_app_user:my_app_user_pwd@localhost/my_app_db',
+        },
+    },
+}

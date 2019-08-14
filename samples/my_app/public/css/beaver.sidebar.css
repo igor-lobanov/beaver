@@ -1,0 +1,97 @@
+/* sidebar and overlay position */
+.beaver-sidebar {
+    min-width: 250px;
+    max-width: 250px;
+    height: 100vh;
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 9999;
+}
+.beaver-sidebar {
+    margin-left: -250px;
+}
+.beaver-sidebar.active {
+    margin-left: 0px;
+}
+.beaver-sidebar-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.7);
+    z-index: 9998;
+    opacity: 0;
+    transition: all 0.5s ease-in-out;
+}
+.beaver-sidebar-overlay.active {
+    display: block;
+    opacity: 1;
+}
+.beaver-sidebar-dismiss {
+    width: 35px;
+    height: 35px;
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    border: 1px solid #bbb;
+}
+/* Styling */
+.beaver-sidebar {
+    background: #e7e7e7;
+    color: #777;
+    transition: all 0.3s;
+    border-right: 1px solid #996;
+    box-shadow: 1px 1px 3px rgba(0, 0, 0, 0.5);
+}
+.beaver-sidebar .beaver-sidebar-header {
+    padding: 20px;
+    padding-top: 30px;
+    background: #e7e7e7;
+}
+.beaver-sidebar ul ul a {
+    font-size: 0.9em !important;
+    padding-left: 30px !important;
+    background: #d7d7d7;
+}
+.beaver-sidebar ul.beaver-sidebar-content {
+    padding: 20px 0;
+    border-bottom: 1px solid #e7e7e7;
+}
+.beaver-sidebar ul p {
+    color: #777;
+    padding: 10px;
+}
+.beaver-sidebar ul li a {
+    padding: 10px;
+    font-size: 1.1em;
+    display: block;
+}
+.beaver-sidebar ul li a:hover {
+    color: #777;
+    background: #fff;
+}
+.beaver-sidebar ul li.active > a, a[aria-expanded="true"] {
+    background: #eee;
+}
+.beaver-sidebar ul li.active > a:hover, a[aria-expanded="true"]:hover {
+    background: #fff;
+}
+.beaver-sidebar a[data-toggle="collapse"][aria-expanded="true"]::after {
+    content: '\f077';
+    font-family: "Font Awesome 5 Free";
+    font-weight: 900;
+    display: inline-block;
+    position: absolute;
+    right: 20px;
+}
+.beaver-sidebar a[data-toggle="collapse"][aria-expanded="false"]::after {
+    content: '\f078';
+    font-family: "Font Awesome 5 Free";
+    font-weight: 900;
+    display: inline-block;
+    position: absolute;
+    right: 20px;
+}

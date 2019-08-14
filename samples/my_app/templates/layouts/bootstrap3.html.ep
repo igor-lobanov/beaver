@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+    
+<head>
+<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+<title><%= title %></title>
+<!-- Bootstrap -->
+<link rel="stylesheet" href="/css/bootstrap.min.css">
+<link rel="stylesheet" href="/css/jquery.mCustomScrollbar.min.css">
+<link rel="stylesheet" href="/css/fa/all.min.css">
+<link rel="stylesheet" href="/css/select2.min.css">
+<link rel="stylesheet" href="/css/select2-bootstrap.min.css">
+<link rel="stylesheet" href="<%= css_load(qw(
+    css/popup.css
+    css/table.css
+    css/navbar.css
+    css/beaver.sidebar.css
+    css/form.css
+), '#1.003') %>">
+<link rel="stylesheet" href="/css/custom.css">
+<!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+<!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+<!--[if lt IE 9]>
+    <script src="/js/html5shiv.min.js"></script>
+    <script src="/js/respond.min.js"></script>
+<![endif]-->
+</head>
+
+<body>
+<%= widget nav_bar => {
+    -fixed => 'top',
+    -items => [
+        {
+            label   => 'Beaver',
+            href    => '/',
+            section => 'brand',
+        },
+        {
+            type    => 'button',
+            label   => '',
+            class   => 'beaver-sidebar-collapse',
+            icon    => ['fas', 'bars'],
+            section => 'left',
+        },
+        {
+            label   => 'Quit',
+            href    => '#',
+            section => 'right',
+            icon    => [
+                'fas',
+                'sign-out-alt',
+            ],
+        },
+    ],
+} %>
+<%= widget side_bar => {
+    -header => 'Beaver',
+    -items => [
+        'Table of Contents',
+        {
+            label => 'Home',
+            href => '/',
+        },
+        {
+            label   => 'Courses',
+            href    => '/courses',
+        },
+    ],
+} %>
+<%= content %>
+<!-- jQuery and Bootstrap 3 -->
+<script src="/js/jquery-3.3.1.min.js"></script>
+<script src="/js/bootstrap.min.js"></script>
+<script src="/js/jquery.mCustomScrollbar.concat.min.js"></script>
+<script src="/js/select2.min.js"></script>
+<script src="<%= js_load(qw(
+    js/beaver.sidebar.js
+), '#1.002') %>"></script>
+<script src="/js/beaver.js"></script>
+<%= js_onload %>
+</body>
+
+</html>
