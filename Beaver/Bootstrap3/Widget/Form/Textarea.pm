@@ -1,4 +1,4 @@
-package Beaver::Bootstrap3::Widget::Form::Input;
+package Beaver::Bootstrap3::Widget::Form::Textarea;
 use Mojo::Base 'Beaver::Bootstrap3::WidgetFormElement';
 
 sub init {
@@ -11,15 +11,19 @@ sub init {
 
 __DATA__
 
-@@ widgets/form-input.html.ep
+@@ widgets/form-textarea.html.ep
 <div class="<%= $wg->field_class %>">
 <label for="<%= $wg->oid %>"><%= $wg->props->{label} %></label>
 %   if ($wg->props->{readonly}) {
-<div><%= $wg->attrs->{value} %></div>
+<div>
+%       if ($wg->attrs->{value} ) {
+<pre><%= $wg->attrs->{value} || $wg->content %></pre>
+%       }
+</div>
 %   }
 %   else {
-<input id="<%= $wg->oid %>" type="text" class="form-control"
+<textarea id="<%= $wg->oid %>" class="form-control" <%== $wg->attrs->{rows} ? 'rows="' . $wg->attrs->{rows} . '"' : '' %>
 <%= $wg->attrs->{'data-form'} ? $wg->pack_attrs({'data-form' => $wg->attrs->{'data-form'}}) : '' %>
-name="<%= $wg->attrs->{name} %>" value="<%= $wg->attrs->{value} %>">
+name="<%= $wg->attrs->{name} %>"><%= $wg->attrs->{value} || $wg->content %></textarea>
 %   }
 </div>

@@ -7,12 +7,13 @@ use Mojo::Loader qw(data_section);
 use Data::Dumper;
 
 has ['attrs', 'props', 'templates'] => sub {{}};
-has ['app', 'oid', 'content'];
+has ['app', 'c', 'oid', 'content'];
 
 sub new {
-    my ($class, $app) = splice(@_, 0, 2);
+    my ($class, $app, $c) = splice(@_, 0, 3);
     my $self = $class->SUPER::new(@_);
     $self->app($app);
+    $self->c($c);
     $self->init(@_);
     return $self;
 }
@@ -20,11 +21,17 @@ sub new {
 sub init {
     my ($self, $args) = splice(@_, 0, 2);
     $args = { $args, @_ } if !ref $args;
-    /^-(\S+)$/ ? $self->props->{$1} : $self->attrs->{$_} = $args->{$_} for keys %$args;
+    if ($args->{-default}) {
+        $args = {%{ $self->defaults->{ $args->{-default} }||{} }, %$args};
+        delete $args->{-default};
+    }
+    /^-(\S+)$/ ? $self->props->{$1} : /^_(\S+)$/ ? $self->attrs->{'data-'.$1} : $self->attrs->{$_} = ref $args->{$_} eq 'CODE' ? $args->{$_}->($self->c) : $args->{$_} for keys %$args;
     $self->oid($self->props->{oid} || $self->app->generate_token);
     $self->attrs->{class} = [split(/\s+/, $self->attrs->{class})] if $self->attrs->{class} && !ref $self->attrs->{class};
     $self;
 }
+
+sub defaults {{}}
 
 sub pack_attrs {
     my ($self, $attrs, $space) = @_;

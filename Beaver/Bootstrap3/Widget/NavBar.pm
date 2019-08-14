@@ -20,7 +20,7 @@ sub init {
 sub item {
     my ($self, $item) = @_;
     if ($item->{type} eq 'button') {
-        $self->app->widget('button' => {
+        $self->c->widget('button' => {
             class => 'navbar' . ($item->{class} ? " $item->{class}" : ''),
         } => sub {
            ($item->{icon} ? $self->icon($item->{icon}) : '') . ($item->{label} || '');

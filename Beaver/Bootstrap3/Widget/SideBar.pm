@@ -7,7 +7,7 @@ sub init {
     my $self = shift;
     $self->SUPER::init(@_);
     push @{$self->attrs->{class} ||= []}, (
-        'cs-sidebar',
+        'beaver-sidebar',
         $self->oid,
     );
     $self;
@@ -19,17 +19,17 @@ __DATA__
 
 @@ widgets/side_bar.html.ep
 <nav <%= $wg->pack_attrs %>>
-    <button class="btn cs-sidebar-dismiss">
+    <button class="btn beaver-sidebar-dismiss">
         <i class="fas fa-arrow-left"></i>
     </button>
 %   if ($wg->props->{header}) {
-    <div class="cs-sidebar-header">
+    <div class="beaver-sidebar-header">
         <h3><%= $wg->props->{header} %></h3>
     </div>
 %   }
 %   if (~~@{ $wg->props->{items} }) {
 %       my $count = 1;
-    <ul class="list-unstyled cs-sidebar-content">
+    <ul class="list-unstyled beaver-sidebar-content">
 %       for my $item (@{ $wg->props->{items} }) {
 %           if (ref $item && $item->{items}) {
         <li>
@@ -52,8 +52,3 @@ __DATA__
     </ul>
 %   }
 </nav>
-
-@@ css/sidebar.css
-
-@@ js/sidabar.js
-

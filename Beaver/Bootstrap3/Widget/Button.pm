@@ -1,6 +1,47 @@
 package Beaver::Bootstrap3::Widget::Button;
 use Mojo::Base 'Beaver::Bootstrap3::Widget';
 use Mojo::Collection;
+use Data::Dumper;
+
+sub defaults {{
+    update => {
+        -label      => 'Save',
+        -icon       => 'fa fa-save',
+        -context    => 'success',
+        _method     => 'POST',
+        _url        => sub { join '/', '', $_[0]->entity, $_[0]->id },
+        _submit     => 'form-update',
+    },
+    create  => {
+        -label      => 'New',
+        -icon        => 'fa fa-plus',
+        -context    => 'primary',
+        _method     => 'POST',
+        _url        => sub { join '/', '', $_[0]->entity },
+        _submit     => 'form-create',
+    },
+    delete  => {
+        -label      => 'Delete',
+        -icon       => 'fa fa-trash',
+        -context    => 'danger',
+        _method     => 'DELETE',
+        -href       => sub { join '/', '', $_[0]->entity, $_[0]->id },
+    },
+    item    => {
+        -label      => 'View',
+        -icon       => 'fa fa-eye',
+        -context    => 'primary',
+        _method     => 'GET',
+        -href       => sub { join '/', '', $_[0]->entity, $_[0]->id },
+    },
+    edit => {
+        -label      => 'Edit',
+        -icon       => 'fa fa-pen',
+        -context    => 'primary',
+        -tag        => 'a',
+        -href       => sub { join '/', '', $_[0]->entity, $_[0]->id, 'edit' },
+    },
+}}
 
 sub init {
     my $self = shift;
@@ -36,15 +77,51 @@ Beaver::Bootstrap3::Widget::Button - button widget
     -block          => 1,
     -disabled       => 1,
     -active         => 1,
+  } => begin %>Back<% end %>
+
+  <%= widget button => {
+    -context        => 'success',
+    -size           => 'lg',
+    -block          => 1,
+    -disabled       => 1,
+    -active         => 1,
+    _submit     => 'save-form',
+    _method     => 'POST',
+    _url        => '/entity/1',
+  } => begin %>Save<% end %>
+
+  <%= widget button => {
+    -context    => 'success',
+    -size       => 'lg',
+    -block      => 1,
+    -disabled   => 1,
+    -active     => 1,
+    _submit     => 'save-form',
+    _method     => 'POST',
+    _url        => sub { join '/', '', $_[0]->entity, $_[0]->id },
+  } => begin %>Save<% end %>
+
+  <%= widget button => {
+    -default    => 'update',
   } => begin %>Save<% end %>
 
 =head1 DESCRIPTION
 
-L<Beaver::Bootstrap3::Widget::Button> provides Bootstrap3 button componnent widget backend for L<MojoX::Plugin::Widgets>.
+L<Beaver::Bootstrap3::Widget::Button> provides Bootstrap3 button componnent widget backend for L<Beaver::Plugin::Widgets>.
 
 =head1 PROPERTIES
 
 L<Beaver::Bootstrap3::Widget::Button> implements following properties.
+
+=head2 default
+
+  <%= widget button => {
+    -default    => 'update',
+    -label      => 'Update2',
+  } %>
+
+Button can have a lot of attributes and properties. To make live easier commonly used sets are predefined.
+So it's possible to specify default set with one row and change only several fields.
 
 =head2 context
 
@@ -105,7 +182,10 @@ L<Mojolicious>, L<Beaver::Plugin::Widgets>.
 __DATA__
 
 @@ widgets/button.html.ep
-<<%= $wg->props->{tag} %> role="button" <%= $wg->pack_attrs %>><%= $wg->content %></<%= $wg->props->{tag} %>>
+<<%= $wg->props->{tag} %> role="button" <%== $wg->props->{href} ? 'href="' . $wg->props->{href} . '"' : '' %> <%= $wg->pack_attrs %>>
+<%= $wg->props->{icon} ? b '<span class="' . $wg->props->{icon} . '"></span>' : '' %>
+<%= $wg->props->{label} || $wg->content %>
+</<%= $wg->props->{tag} %>>
 % if ($wg->props->{disabled} && $wg->props->{tag} eq 'a') {
 % js_onload begin
 $('.<%= $wg->oid %>').on('click',function(){return false;});

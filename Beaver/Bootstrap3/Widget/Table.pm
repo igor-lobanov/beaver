@@ -1,6 +1,10 @@
 package Beaver::Bootstrap3::Widget::Table;
 use Mojo::Base 'Beaver::Bootstrap3::Widget';
 
+use Mojo::Collection;
+
+has buttons => sub {new Mojo::Collection};
+
 has link => sub {sub {undef}};
 
 sub init {
@@ -13,6 +17,14 @@ sub init {
     for (qw(striped bordered hover condensed)) {
         push @{ $self->attrs->{class} }, 'table-'.$_ if exists $self->props->{$_};
     }
+
+    push @{ $self->buttons }, grep {
+        ref $$_{-hide} ? $$_{-hide}->($self->c) : exists $$_{-hide} ? !$$_{-hide} : 1
+    } grep {
+        ref $$_{-show} ? $$_{-show}->($self->c) : exists $$_{-show} ? $$_{-show} : 1
+    } grep {
+        @{ $$_{-actions}||[] } ? any { $self->c->action eq $_ } @{ $$_{-actions}||[] } : 1
+    }  @{ $self->props->{buttons}||[] };
     $self->link(sub { $self->props->{link}->(@_) }) if $self->props->{link};
     $self;
 }
@@ -83,12 +95,16 @@ Beaver::Bootstrap3::Widget::Table - table widget
         surname     => 'Turgenev',
         position    => 'Frontend engineer',
         salary      => 90000,
-    }]
+    }],
+    -buttons    => [
+        'add',
+        'export'
+    ],
   } %>
 
 =head1 DESCRIPTION
 
-L<Beaver::Bootstrap3::Widget::Table> provides Bootstrap3 table componnent widget backend for L<MojoX::Plugin::Widgets>.
+L<Beaver::Bootstrap3::Widget::Table> provides Bootstrap3 table componnent widget backend for L<Beaver::Plugin::Widgets>.
 
 =head1 PROPERTIES
 
@@ -159,7 +175,7 @@ Defines order and hash key names of displayed data. It's required if data is arr
 
 =head1 SEE ALSO
 
-L<Mojolicious>, L<MojoX::Plugin::Widgets>.
+L<Mojolicious>, L<Beaver::Plugin::Widgets>.
 
 =cut
 
@@ -170,6 +186,17 @@ __DATA__
 <div class="table-responsive">
 % }
 <table <%= $wg->pack_attrs %>>
+% if ($wg->buttons->size) {
+    <thead>
+        <tr>
+            <td class="text-right" colspan="<%= @{ $wg->props->{columns} } %>">
+%   for my $btn ($wg->buttons->each) {
+<%= widget button => ($btn) %>
+%   }
+            </td>
+        </tr>
+    </thead>
+% }
 % if ($wg->props->{header}) {
     <thead>
 %   for my $cell (@{ $wg->props->{header} }) {
