@@ -12,9 +12,10 @@ sub register {
         my ($c, $backend) = @_;
         if (!exists $self->connectors->{$backend}) {
             my $dsn = $app->config->{beaver}{backends}{$backend} || croak "Backend '$backend' is not defined in beaver.conf";
+            croak $dsn;
             my $module;
             for ($dsn) {
-                $module = 'Mojo::Pg',     last if $dsn =~ /^pg:/;
+                $module = 'Mojo::Pg',     last if $dsn =~ /^postgres:/;
                 $module = 'Mojo::mysql',  last if $dsn =~ /^mysql:/;
                 $module = 'Mojo::SQLite', last if $dsn =~ /^sqlite:/;
             }

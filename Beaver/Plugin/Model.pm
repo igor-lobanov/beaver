@@ -7,12 +7,12 @@ use Carp 'croak';
 use Data::Dumper;
 
 has [qw(app)];
-has [qw(models schemas connectors drivers)] => sub {{}};
+has [qw(models connectors drivers)] => sub {{}};
 
 sub register {
     my ($self, $app, $conf) = @_;
     $self->app($app); 
-    
+   
     $app->helper('load_model' => sub {
         my ($c, $entity) = @_;
         if (!exists $self->models->{$entity}) {
@@ -21,17 +21,10 @@ sub register {
             croak ref $e ? $e : qq{Model '$entity' module '$module' loading error} if $e;
             $self->models->{$entity} = $module;
         }
-        if (!exists $self->schemas->{$entity}) {
-            my $module = ref($c->app) . '::Schema::' . camelize($entity);
-            my $e = load_class $module;
-            croak ref $e ? $e : qq{Schema '$entity' module '$module' loading error} if $e;
-            $self->schemas->{$entity} = $module;
-        }
         $self->models->{$entity}->new(
-            schema  => $self->schemas->{$entity}->new,
             app     => $self->app,
             entity  => $entity,
-            instance => $c,
+            c       => $c,
         );
     });
 
@@ -41,7 +34,7 @@ sub register {
             my $dsn = $app->config->{beaver}{backends}{$backend} || croak "Backend '$backend' is not defined in beaver.conf";
             my $module;
             for ($dsn) {
-                $module = 'Mojo::Pg',     last if $dsn =~ /^pg:/;
+                $module = 'Mojo::Pg',     last if $dsn =~ /^postgres:/;
                 $module = 'Mojo::mysql',  last if $dsn =~ /^mysql:/;
                 $module = 'Mojo::SQLite', last if $dsn =~ /^sqlite:/;
             }

@@ -4,6 +4,7 @@ use Mojo::Base 'Mojolicious::Plugin';
 use Mojo::Util qw(xml_escape camelize);
 use Mojo::ByteStream;
 use Session::Token;
+use Digest::MD5 qw(md5_hex);
 
 use Data::Dumper;
 
@@ -45,12 +46,12 @@ sub register {
             $ref        = $_, next if !ref $_;
         }
 
-        my $wg = $self->create_self($name, $vars);
+        my $wg = $self->create_self($c, $name, $vars);
         $self->refs->{$ref} = $wg if $ref;
         $wg->content($content->($wg, $vars)) if $content && $wg->can('content');
         $c->stash(
-            vars => $vars,
-            wg => $wg,
+            vars    => $vars,
+            wg      => $wg,
         )->render_to_string(
             "widgets/$name"
         );
@@ -58,7 +59,7 @@ sub register {
 
     # adding js snippets to document onload (jQuery is expected in frontend)
     $app->helper(js_onload => sub {
-        my ($c, $content) = @_;
+        my ($c, $content, $once) = @_;
         my $code = $c->stash('widget.jsonload') || [];
         if ($content) {
             $c->stash('widget.jsonload' => [@$code, $content->()]);
@@ -67,6 +68,14 @@ sub register {
             return Mojo::ByteStream->new("<script>\n\$(function(){\n" . join("\n;\n", @$code) . "\n})\n</script>");
         }
         "";
+    });
+    $app->helper(js_onload_once => sub {
+        my ($c, $content) = @_;
+        if ($content) {
+            my $md5 = md5_hex($content->());
+            $c->js_onload($content) if !$c->stash('widget.jsonload.'.$md5);
+            $c->stash('widget.jsonload.'.$md5, 1);
+        }
     });
 
     # object ID generator for unique internal DOM ids
@@ -83,7 +92,7 @@ sub register {
 }
 
 sub create_self {
-    my ($self, $name, $vars) = @_;
+    my ($self, $c, $name, $vars) = @_;
     if (!$self->modules->{$name}) {
         my $module = (
             $self->modules->{$name} = join('::', $self->cfg->{namespace} || ref($self->app), 'Widget', camelize($name))
@@ -93,7 +102,7 @@ sub create_self {
         push @{$self->app->renderer->classes}, $self->modules->{$name};
         $self->app->renderer->warmup;
     }
-    $self->modules->{$name}->new($self->app, $vars);
+    $self->modules->{$name}->new($self->app, $c, $vars);
 }
 
 1;
