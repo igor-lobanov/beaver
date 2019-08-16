@@ -143,6 +143,13 @@ sub list {
     }
 }
 
+sub delete {
+    my $c = shift;
+    return {error => 404} if $c->modelless;
+    $c->model->delete;
+    return {redirect => '/' . $c->entity};
+}
+
 sub create {
     my $c = shift;
     return {error => 404} if $c->modelless;

@@ -131,6 +131,23 @@ sub create {
     $m->c->id;
 }
 
+# $m->delete(100);
+# $m->delete(100, {hard => 1});
+# $m->delete(100, {fake => -1});
+sub delete {
+    my ($m, @args) = @_;
+    
+    my ($id, $opts) = (0, {});
+    for (@args) {
+        $id = $_, next if !ref $_;
+        $opts = $_, next if ref $_;
+    }
+    $id = $m->c->id if !$id && $m->c->entity eq $m->entity;
+    return undef if !$id;
+
+    $$opts{hard} ? $m->db->delete($m->entity, {id => $id}) : $m->db->update($m->entity, {fake => $$opts{fake}||-1}, {id => $id});
+}
+
 sub _order_by {
     my ($m, $fields) = @_;
     my @order;
