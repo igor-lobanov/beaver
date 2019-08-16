@@ -21,6 +21,11 @@
             -actions    => [qw(item edit)],
             -label      => 'Назад',
         },
+        {
+            -default    => 'delete',
+            -actions    => [qw(item)],
+            -label      => 'Удалить',
+        },
     ],
     -fields     => [[
         [

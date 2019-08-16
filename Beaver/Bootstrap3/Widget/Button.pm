@@ -25,7 +25,12 @@ sub defaults {{
         -icon       => 'fa fa-trash',
         -context    => 'danger',
         _method     => 'DELETE',
-        -href       => sub { join '/', '', $_[0]->entity, $_[0]->id },
+        _url        => sub { join '/', '', $_[0]->entity, $_[0]->id },
+        _submit     => 'form-delete',
+        _confirm    => 'Are you sure?',
+        _confirm_title      => 'Delete record',
+        _confirm_label_yes  => 'Yes',
+        _confirm_label_no   => 'No',
     },
     item    => {
         -label      => 'View',
