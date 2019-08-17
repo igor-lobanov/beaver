@@ -19,13 +19,13 @@ __DATA__
 <div class="<%= $wg->field_class %>">
 <label for="<%= $wg->oid %>"><%= $wg->props->{label} %></label>
 %   if ($wg->props->{readonly}) {
-<div><%= join('; ', map {$_->{label}} grep { $wg->attrs->{value} == $_->{id} } @{ $wg->props->{values} || []} ) %></div>
+<div><%= join('; ', map {$_->{label}} grep { $wg->attrs->{value} == $_->{id} } @{ $wg->props->{values} } ) %></div>
 %   }
 %   else {
 <select <%= $wg->pack_attrs({class => $wg->attrs->{class}}) %>
 <%= $wg->attrs->{'data-form'} ? $wg->pack_attrs({'data-form' => $wg->attrs->{'data-form'}}) : '' %>
 name="<%= $wg->attrs->{name} %>">
-%       for my $option (@{ $wg->props->{values} || []}) {
+%       for my $option ($wg->props->{values}->each) {
 <option <%= $option->{id} == $wg->attrs->{value} ? 'selected' : '' %> value="<%= $option->{id} %>"><%= $option->{label} %></option>
 %       }
 </select>

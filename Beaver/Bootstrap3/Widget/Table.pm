@@ -186,13 +186,24 @@ __DATA__
 <div class="table-responsive">
 % }
 <table <%= $wg->pack_attrs %>>
-% if ($wg->buttons->size) {
+% if ($wg->buttons->size || $wg->props->{label}) {
     <thead>
         <tr>
-            <td class="text-right" colspan="<%= @{ $wg->props->{columns} } %>">
+            <td colspan="<%= @{ $wg->props->{columns} } %>">
+                <div class="container-fluid pt-20">
+                    <div class="row">
+                    <div class="col-md-4">
+%   if ($wg->props->{label}) {
+<h4><%= $wg->props->{label} %></h4>
+%   }
+                    </div>
+                    <div class="col-md-8 text-right">
 %   for my $btn ($wg->buttons->each) {
 <%= widget button => ($btn) %>
 %   }
+                        </div>
+                    </div>
+                </div>
             </td>
         </tr>
     </thead>
