@@ -1,6 +1,7 @@
 % layout 'bootstrap3';
 % title 'School';
 <%= widget table => {
+    -label      => 'Типы курсов',
     -buttons    => [
         {
             -default    => 'create',
@@ -12,7 +13,7 @@
     -hover      => 1,
     -condensed  => 1,
     -responsive => 1,
-    -header     => ['Название', 'Описание'],
-    -columns    => [qw(label description)],
-    -data       => $D->{rows},
+    -header     => ['Название'],
+    -columns    => [qw(label)],
+    -data       => $D->rows,
 } %>

@@ -1,7 +1,7 @@
 % layout 'bootstrap3';
-% title 'School';
+% title 'Курсы';
 <%= widget form => {
-    -label      => 'Курсы',
+    -label      => $D->row->{fake}>0 ? 'Новый тип курса' : 'Тип курсa "' . $D->row->{label} . '"',
     -readonly   => 1,
     -buttons    => [
         {
@@ -31,26 +31,8 @@
                 _form       => [qw(form-update form-copy)],
             }
         ],
-        [
-            'form-textarea'    => {
-                name        => 'description',
-                -label      => 'Описание',
-                -col        => {md => 4},
-                rows        => 5,
-                _form       => [qw(form-update form-copy)],
-            }
-        ],
-        [
-            'form-select'   => {
-                name    => 'type',
-                -label  => 'Тип',
-                -col    => {md => 4},
-                _form   => [qw(form-update form-copy)],
-                -values => $D->{voc}{types},
-            }
-        ],
     ]],
-    -data       => $D,
+    -data       => $D->row,
     -readonly   => sub {$_[0]->action ne 'edit'},
 } => begin %>
 <% end %>

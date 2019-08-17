@@ -51,11 +51,11 @@
                 -label  => 'Тип',
                 -col    => {md => 4},
                 _form   => [qw(form-update form-copy)],
-                -values => $D->{vocs}{course_types},
+                -values => $D->vocs->{course_types},
             }
         ],
     ]],
-    -data       => $D,
+    -data       => $D->row,
     -readonly   => sub {$_[0]->action ne 'edit'},
 } => begin %>
 <% end %>

@@ -1,6 +1,6 @@
 package MyApp::Model::Courses;
 
-use Mojo::Base 'Beaver::Model::Pg';
+use Mojo::Base 'Beaver::Model::Pg::Common';
 has backend => 'Pg1';
 has definition => sub {[
     {

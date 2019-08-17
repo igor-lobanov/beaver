@@ -1,7 +1,8 @@
 % layout 'bootstrap3';
-% title 'School';
+% title 'Курсы';
 % my $course_types = { map {$_->{id} => $_->{label} } @{ $D->{vocs}{course_types}||[] } };
 <%= widget table => {
+    -label      => 'Курсы',
     -buttons    => [
         {
             -default    => 'create',
@@ -13,7 +14,7 @@
     -hover      => 1,
     -header     => ['Название', 'Описание', 'Тип'],
     -columns    => [qw(label description course_type_label)],
-    -data       => $D->{rows},
+    -data       => $D->rows,
     -cols       => sub { sub {
         [
             $_[0]->{label},
