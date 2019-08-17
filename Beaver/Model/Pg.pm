@@ -1,7 +1,9 @@
 package Beaver::Model::Pg;
 
 use Mojo::Base 'Beaver::Model';
-has [qw(backend version pg db sql)];
+use Beaver::Model::Result;
+
+has [qw(backend pg db sql)];
 use Data::Dumper;
 
 my $pg;
@@ -11,76 +13,35 @@ sub init {
     $m->pg($pg ||= $m->app->connect($m->backend));
     $m->db($pg->db);
     $m->sql($pg->abstract);
-    my $mg = $m->pg->migrations->name(ref $m)->from_data(ref $m);
-#    state $version = 0;
-#    $mg->migrate, $version = $mg->latest if $version < $mg->latest;
-    $mg->migrate;
     $m;
 }
 
-# item returns approved record (fake=0) or new record of current user (fake=<sid>)
 sub item {
-    my ($m, @args) = @_;
-    my ($id, $opts) = (0, {});
-    for (@args) {
-        $id = $_, next if !ref $_;
-        $opts = $_, next if ref $_;
-    }
+    my $m = shift;
+    my ($id, $opts) = $m->_id_opts(@_);
     $id = $m->c->id if !$id && $m->c->entity eq $m->entity;
     return undef if !$id;
-    my $item = $m->db->query(qq{
-        SELECT *
-        FROM @{[ $m->entity ]}
-        WHERE id = ? AND (fake = 0 OR fake = ?)
-    }, $id, $m->c->sid)->hash;
-    if ($$opts{add_vocs}) {
-        for my $voc ($m->vocs->each) {
-            $item->{vocs}{$voc} = $m->c->model($m->c->load_model($voc))->list->{data}{rows};
-        }
-    }
-    return $item;
+
+    my $return = new Beaver::Model::Result;
+    $return->row(
+        $m->db->query(qq{
+            SELECT *
+            FROM @{[ $m->entity ]}
+            WHERE id = ? AND (fake = 0 OR fake = ?)
+        }, $id, $m->c->sid)->hash
+    );
+    $return->vocs(
+        { map { $_ => $m->c->load_model($_)->list({sort => 'label', nolimit => 1})->rows } ref $$opts{add_vocs} ? @{ $$opts{add_vocs} } : $m->vocs->each }
+    ) if $$opts{add_vocs};
+
+    return $return;
 }
 
-# $m->list({
-#    nolimit => 1, # 0|1
-#    start   => 100,
-#    portion => 100,
-#    order   => 'field1',
-#    order   => [qw(field1 field2)]
-#    order   => [{field1 => 'asc', field2 => 'desc')],
-#    order   => {field1 => 'asc'},
-#    order   => {field1 => 'asc', field2 => 'desc'}, # bad practice
-#    add_vocs    => 1,
-#    add_vocs    => [qw(voc1 voc2)],
-#    count   => 1,
-#    add_fields  => {
-#       sum_field1_field2  => sub {
-#           my $row = shift;
-#           $row->{field1}+$row{field2};
-#       }
-#    },
-#    join_vocs  => {
-#       id_voc1 => voc1_label,
-#    },
-#    where   => {
-#        field1  => 'val1',
-#        field2  => 'val1',
-#    },
-#    fields  => '*',
-#    fields  => [qw(field1 field2)],
-# })
-# {
-#   rows    => [{...}],
-#   count   => 101,     # if $opts->{count}
-#   count   => 0,       # if !$opts->{count}
-#   vocs    => {voc1 => [{ id=>1, label=>'value 1' },...], ...} # if $opts->{add_vocs}
-# }
 sub list {
-    my ($m, $opts) = @_;
-    $opts ||= {};
-
+    my $m = shift;
+    my $opts = $m->_opts(@_);
     my $table = $m->entity;
-    my $order = $$opts{order} ? $m->_order_by($opts->{order}) : '';
+    my $sort = $$opts{sort} ? $m->_order_by($opts->{sort}) : '';
     my $limit = $$opts{nolimit} ? '' : sprintf('LIMIT %i OFFSET %i', ($$opts{portion}||=10)+0, ($$opts{start}||=0)+0);
     my @fields = ref $$opts{fields} ? map {"$table.$_"} @{ $$opts{fields} } : "$table.*";
     my @joins;
@@ -93,58 +54,66 @@ sub list {
     my $joins = join(' ', @joins);
     my $fields = join(', ', @fields);
 
-    my $result = {};
-    $$result{rows} = $m->db->query(qq{
-        SELECT $fields
-        FROM $table $joins
-        WHERE $table.fake = 0
-        $order
-        $limit
-    })->hashes;
-    $$result{rows} = $$result{rows}->each(sub {my ($e) = @_; $e->{$_} = $$opts{add_fields}{$_}->($e) for keys %{$$opts{add_fields}}}) if $$opts{add_fields};
+    my $return = new Beaver::Model::Result;
+    $return->rows(
+        $m->db->query(qq{
+            SELECT $fields
+            FROM $table $joins
+            WHERE $table.fake = 0
+            $sort
+            $limit
+        })->hashes
+    );
+    $return->rows->each(sub {
+        my ($e) = @_;
+        $e->{$_} = $$opts{add_fields}{$_}->($e) for keys %{$$opts{add_fields}}
+    }) if $$opts{add_fields};
 
-    $$result{count} = $$opts{count} ? $m->db->query(qq{ SELECT COUNT(*) AS count FROM $table WHERE fake = 0 })->hash->{count} : 0;
+    $return->count(
+        $m->db->query(qq{ SELECT COUNT(*) AS count FROM $table WHERE fake = 0 })->hash->{count}
+    ) if $$opts{count};
 
-    if ($$opts{add_vocs}) {
-        $$result{vocs}{$_} = $m->c->load_model($_)->list({order => 'label', nolimit => 1})->{rows} || [] for ref $$opts{add_vocs} ? @{ $$opts{add_vocs} } : $m->vocs->each;
-    }
+    $return->vocs({
+        map {
+            $_ => $m->c->load_model($_)->list({sort => 'label', nolimit => 1})->rows || new Mojo::Collection([])
+        } ref $$opts{add_vocs} ? @{ $$opts{add_vocs} } : $m->vocs->each
+    }) if $$opts{add_vocs};
     
-    $result;
+    $return;
 }
 
 sub update {
-    my ($m, $data) = @_;
-    $data ||= { map {$_ => $m->c->data->{$_}} grep {exists $m->c->data->{$_}} $m->columns->each };
+    my $m = shift;
+    my $data = $m->_opts(@_);
+    $data = { map {$_ => $m->c->data->{$_}} grep {exists $m->c->data->{$_}} $m->columns->each } if !keys %$data;
     $$data{fake} ||= 0;
+
     if (my $id = $data->{id} || $m->c->id) {
         delete $$data{id};
         $m->db->update($m->entity, $data, {id => $id});
     }
+
+    $m;
 }
 
 sub create {
-    my ($m, $data) = @_;
-    $data ||= { map {$_ => $m->c->data->{$_}} grep {exists $m->c->data->{$_}} $m->columns->each };
+    my $m = shift;
+    my $data = $m->_opts(@_);
+    $data = { map {$_ => $m->c->data->{$_}} grep {exists $m->c->data->{$_}} $m->columns->each } if !keys %$data;
     $$data{fake} = $m->c->sid if !exists $$data{fake};
     delete $$data{id};
-    $m->c->id($m->db->insert($m->entity, $data, {returning => 'id'})->hash->{id});
-    $m->c->id;
+
+    my $id = $m->db->insert($m->entity, $data, {returning => 'id'})->hash->{id};
+    $m->c->id($id) if $m->entity eq $m->c->entity;
+    
+    $id;
 }
 
-# $m->delete(100);
-# $m->delete(100, {hard => 1});
-# $m->delete(100, {fake => -1});
 sub delete {
-    my ($m, @args) = @_;
-    
-    my ($id, $opts) = (0, {});
-    for (@args) {
-        $id = $_, next if !ref $_;
-        $opts = $_, next if ref $_;
-    }
+    my $m = shift;
+    my ($id, $opts) = $m->_id_opts(@_);
     $id = $m->c->id if !$id && $m->c->entity eq $m->entity;
     return undef if !$id;
-
     $$opts{hard} ? $m->db->delete($m->entity, {id => $id}) : $m->db->update($m->entity, {fake => $$opts{fake}||-1}, {id => $id});
 }
 
@@ -188,6 +157,36 @@ sub _order_by {
 
 =encoding utf8
 
+=head1 SYNOPSIS
+
+    package MyApp::Model::Goods;
+    use Mojo::Base 'Beaver::Model::Pg';
+
+    $m->item->row;
+    $m->list->rows;
+
+=head1 DESCRIPTION
+
+L<Beaver::Model::Pg> is base class for Beaver low-level models based on Pg database.
+
+=head1 ATTRIBUTES
+
+=head2 backend
+
+Reference to backend config section in config
+
+=head2 pg
+
+Mojo::Pg instance
+
+=head2 db
+
+Mojo::Pg db instance
+
+=head2 sql
+
+Mojo::Pg abstract instance
+
 =over 1
 
 =item item
@@ -199,7 +198,7 @@ Get entity by id
 
 Get item with id from controller instance (usually taken from request URL)
 
-    $m->item();
+    $m->item;
 
 =item list
 
@@ -217,21 +216,42 @@ Select all records without LIMIT and OFFSET
         nolimit => 1,
     });
 
+Sort result set
+
     # ORDER BY id ASC
     $m->list({
-        order   => 'id',
+        sort   => 'id',
     });
+
+    # ORDER BY label ASC, id ASC
+    $m->list({
+        sort   => [qw(label id)],
+    });
+
+Change sort order
 
     # ORDER BY id DESC
     $m->list({
-        order => { id => 'desc' },
+        sort => { id => 'desc' },
     });
 
-It's possible to set more then 1 key but it's bad practice - sort result will be unpredictable - use array ref instead
+It's possible to set more then 1 key but it's bad practice - sort result will be unpredictable
+
+    # ORDER BY label DESC, id ASC
+    # or maybe
+    # ORDER BY id ASC, label DESC
+    $m->list({
+        sort => {
+            label   => 'desc',
+            id      => 'asc',
+        },
+    });
+
+Use array ref instead
 
     # ORDER BY label DESC, id ASC
     $m->list({
-        order => [
+        sort => [
             { label => 'desc' },
             { id    => 'asc'  },
         ]
@@ -239,17 +259,72 @@ It's possible to set more then 1 key but it's bad practice - sort result will be
 
 Add evalueted fields in result:
 
-    # {
-    #   a   => 1,
-    #   b   => 2,
-    #   sum => 3,
-    # }
-    $m->list({}, {
-        sum => sub {
-            my ($r) = @_;
-            $r->{a}+$r->{b};
+    $m->list({
+        add_fields  => {
+            sum_field1_field2  => sub {
+                my $row = shift;
+                $row->{field1}+$row{field2};
+            },
         },
     });
+
+If model fields described as vocabularies you can add corresponding vocabularies to result
+
+    $m->list({
+        add_vocs    => 1,
+    });
+
+Or only several vocabularies
+
+    $m->list({
+        add_vocs    => [qw(id_type id_kind)],
+    });
+
+Also you can join vocabularies directly to result items
+
+    $m->list({
+        join_vocs  => {
+            id_type => type_label,
+        },
+    })->rows->first->{type_label};
+
+Eval total count of rows in the result
+
+    $m->list({
+        count   => 1,
+    });
+
+Specify table fields which will be included in result set
+
+    $m->list({
+        fields  => [qw(id label fake)],
+    });
+
+By default list returns all fields
+
+    $m->list({
+        fields  => '*',
+    });
+
+Note that B<join_vocs> will add corresponding fields independently.
+
+=item delete
+
+Delete record by ID
+
+    $m->delete(100);
+
+Delete row by current entity ID
+    
+    $m->delete;
+
+B<Beaver::Model::Pg> uses "soft" deletion which doesn't remove row from table but marks it as deleted by setting field fake to negative value (-1). If you need to remove record phisically use option B<hard>.
+
+    $m->delete(100, {hard => 1});
+
+You can set another value of fake. If option B<fake> is skipped value -1 is used for fake.
+
+    $m->delete(100, {fake => -2});
 
 =back
 

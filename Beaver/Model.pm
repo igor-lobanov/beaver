@@ -13,7 +13,8 @@ sub new {
 sub init { $_[0] }
 
 sub item {
-    my ($m, $id) = @_;
+    my $m = shift;
+    my ($id, $opts) = $m->_id_opts(@_);
     {
         entity  => $m->entity,
         id      => $id || $m->c->id || 0,
@@ -21,7 +22,9 @@ sub item {
 }
 
 sub list {
-    wantarray ? [] : ([], 0)
+    my $m = shift;
+    my $opts = $m->_opts(@_);
+    wantarray ? [] : ([], 0);
 }
 
 sub fields {
@@ -35,14 +38,29 @@ sub field {
 }
 
 sub columns {
-    my ($m) = @_;
+    my $m = shift;
     return new Mojo::Collection(map { $_->{name} } @{ $m->definition });
 }
 
 sub vocs {
-    my ($m) = @_;
+    my $m = shift;
     my %vocs = map { $m->fields($_)->{vocabulary} => 1 } grep { $m->fields($_)->{vocabulary} } @{ $m->columns };
     return new Mojo::Collection(keys %vocs);
+}
+
+sub _id_opts {
+    shift;
+    my ($id, $opts) = (0, {});
+    for (@_) {
+        $id = $_, next if !ref $_;
+        $opts = $_, next if ref $_;
+    }
+    return ($id, $opts);
+}
+
+sub _opts {
+    shift;
+    @_==1 ? $_[0] : { @_ };
 }
 
 1;
