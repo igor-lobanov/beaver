@@ -19,4 +19,16 @@ sub list {
     return {data => $list};
 }
 
+sub POST_validate_update {
+    my $c = shift;
+    
+    my @errors;
+    push @errors, {field => 'label', message => 'Это поле необходимо'} if !$c->data->{label};
+
+    return @errors ? [
+        { alert => {message => "Форма содержит ошибки, данные не сохранены", title => "Есть ошибки", label_ok => "Понятно"} },
+        @errors,
+    ] : undef;
+}
+
 1;

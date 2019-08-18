@@ -17,7 +17,7 @@ Beaver = (function(NS) {
             message: 'Are you sure?',
             title: 'Confirm action',
             label_yes: 'Yes',
-            label_no: 'No',
+            label_no: 'No'
         }, dlg);
         $('<div class="modal fade">').append(
             $('<div class="modal-dialog">').append(
@@ -38,8 +38,50 @@ Beaver = (function(NS) {
                 )
             )
         ).modal();
-    }
+    };
+    
+    NS.alert = function(dlg) {
+        dlg = $.extend(true, {
+            callback: function(){},
+            message: 'Something happened',
+            title: 'Alert',
+            label_ok: 'Ok'
+        }, dlg);
+        $('<div class="modal fade">').append(
+            $('<div class="modal-dialog">').append(
+                $('<div class="modal-content">').append(
+                    $('<div class="modal-header">').append(
+                        $('<button type="button" class="close" data-dismiss="modal">').html('&times;'),
+                        $('<h3 class="modal-title">').text(dlg.title)
+                    ),
+                    $('<div class="modal-body">').append(
+                        $('<p class="lead">').text(dlg.message)
+                    ),
+                    $('<div class="modal-footer">').append(
+                        $('<button type="button" class="btn btn-lg btn-primary" data-dismiss="modal">').text(dlg.label_ok)
+                    )
+                )
+            )
+        ).css("z-index", "9999").modal();
+    };
 
+    NS.display_errors = function(errors) {
+        for (var i=0; i<errors.length; i++) {
+            if (typeof(errors[i].alert)!=="undefined") {
+                Beaver.alert(errors[i].alert);
+            }
+            else if (typeof(errors[i].field)!=="undefined") {
+                var el = $('[name="'+errors[i].field+'"]');
+                el.closest('[class~="form-group"]').addClass('has-error').data({
+                    toggle: "popover",
+                    trigger: "click hover",
+                    placement: "auto",
+                    content: errors[i].message
+                }).popover();
+            }
+        }
+    };
+    
     NS.sendRequest = function(req) {
         req = $.extend(true, {
             method: 'GET',
@@ -64,12 +106,18 @@ Beaver = (function(NS) {
             processData: false,
             data: formdata,
             traditional: true,
+            beforeSend: function(xhr, settings) {
+                $('.form-group.has-error').popover('destroy').removeClass('has-error');
+            },
             error: function(xhr, status, error) {},
             success: function(data, status, xhr) {
                 if (typeof(data.redirect)!=="undefined") {
                     // restore redirect parameters from web-storage
                     // TODO
                     NS.redirect(data.redirect);
+                }
+                else if (typeof(data.errors)!=="undefined") {
+                    NS.display_errors(data.errors);
                 }
             }
         });
