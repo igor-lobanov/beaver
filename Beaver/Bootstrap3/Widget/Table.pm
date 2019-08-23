@@ -100,6 +100,11 @@ Beaver::Bootstrap3::Widget::Table - table widget
         'add',
         'export'
     ],
+    -pager      => {
+        count   => 1000,
+        start   => 50,
+        portion => 10,
+    },
   } %>
 
 =head1 DESCRIPTION
@@ -215,18 +220,28 @@ __DATA__
 %   }
     </thead>
 % }
-% if (~~@{$wg->props->{data}}) {
+%   if (~~@{$wg->props->{data}}) {
     <tbody>
-%   for my $row (@{ $wg->props->{data} }) {
+%       for my $row (@{ $wg->props->{data} }) {
         <tr<%== $wg->pack_attrs($wg->row_attrs($row), ' ') %>>
-%       for my $cell (@{ $wg->cells($row) }) {
+%           for my $cell (@{ $wg->cells($row) }) {
             <td<%== $wg->pack_attrs($wg->cell_attrs($cell), ' ') %>><%= ref $cell ? $cell->{value} : $cell %></td>
-%       }
+%           }
         </tr>
-%   }
+%       }
     </tbody>
-% }
+%   }
+
+%   if ($wg->props->{pager}) {
+    <tfoot>
+        <tr>
+            <td colspan="<%= @{ $wg->props->{columns} } %>">
+<%= widget pager => $wg->props->{pager} %>
+            </td>
+        </tr>
+    </tfoot>
 </table>
+%   }
 % if ($wg->props->{responsive}) {
 </div>
 % }

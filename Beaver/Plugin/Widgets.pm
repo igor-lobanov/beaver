@@ -5,6 +5,7 @@ use Mojo::Util qw(xml_escape camelize);
 use Mojo::ByteStream;
 use Session::Token;
 use Digest::MD5 qw(md5_hex);
+use Mojo::JSON qw(to_json);
 
 use Data::Dumper;
 
@@ -76,6 +77,10 @@ sub register {
             $c->js_onload($content) if !$c->stash('widget.jsonload.'.$md5);
             $c->stash('widget.jsonload.'.$md5, 1);
         }
+    });
+    $app->helper(json => sub {
+        my ($c, $data) = @_;
+        Mojo::ByteStream->new(to_json($data));
     });
 
     # object ID generator for unique internal DOM ids

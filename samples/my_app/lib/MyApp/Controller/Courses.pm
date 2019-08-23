@@ -22,8 +22,9 @@ sub list {
 sub POST_validate_update {
     my $c = shift;
     
-    my @errors;
-    push @errors, {field => 'label', message => 'Это поле необходимо'} if !$c->data->{label};
+    my @errors = map {{field => $_, message => 'Это поле необходимо'}} grep {$c->data->{$_} !~ /\S/} qw(label description);
+    push @errors, map {{field => $_, message => 'Это поле необходимо'}} grep {$c->data->{$_} == 0} qw(id_course_type);
+    push @errors, map {{field => $_, message => 'Неверный формат поля'}} grep {$c->data->{$_} !~ /^\d+$/} qw(id_course_type);
 
     return @errors ? [
         { alert => {message => "Форма содержит ошибки, данные не сохранены", title => "Есть ошибки", label_ok => "Понятно"} },

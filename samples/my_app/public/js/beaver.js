@@ -11,6 +11,32 @@ Beaver = (function(NS) {
         if (path == newpath) window.location.reload(true);
     };
 
+    NS.getStorage = function(key) {
+        try {
+            var value = JSON.parse(window.localStorage.getItem(key));
+            if (value == null) {
+                return [];
+            }
+            else {
+                return value;
+            }
+        }
+        catch (e) {
+            return [];
+        }
+    };
+    NS.pushStorage = function(key, value) {
+        var stored = NS.getStorage(key);
+        stored.push(value);
+        window.localStorage.setItem(key, JSON.stringify(stored));
+    };
+    NS.popStorage = function(key) {
+        var stored = NS.getStorage(key);
+        var value = stored.pop();
+        window.localStorage.setItem(key, JSON.stringify(stored));
+        return value;
+    };
+
     NS.confirm = function(dlg) {
         dlg = $.extend(true, {
             callback: function(){},
@@ -65,14 +91,14 @@ Beaver = (function(NS) {
         ).css("z-index", "9999").modal();
     };
 
-    NS.display_errors = function(errors) {
+    NS.display_errors = function(errors,form) {
         for (var i=0; i<errors.length; i++) {
             if (typeof(errors[i].alert)!=="undefined") {
                 Beaver.alert(errors[i].alert);
             }
             else if (typeof(errors[i].field)!=="undefined") {
                 var el = $('[name="'+errors[i].field+'"]');
-                el.closest('[class~="form-group"]').addClass('has-error').data({
+                el.closest('[class~="form-group"]').addClass('has-error from-'+form).data({
                     toggle: "popover",
                     trigger: "click hover",
                     placement: "auto",
@@ -107,7 +133,7 @@ Beaver = (function(NS) {
             data: formdata,
             traditional: true,
             beforeSend: function(xhr, settings) {
-                $('.form-group.has-error').popover('destroy').removeClass('has-error');
+                $('.form-group.has-error.from-'+req.form).popover('destroy').removeClass('has-error');
             },
             error: function(xhr, status, error) {},
             success: function(data, status, xhr) {
@@ -117,20 +143,45 @@ Beaver = (function(NS) {
                     NS.redirect(data.redirect);
                 }
                 else if (typeof(data.errors)!=="undefined") {
-                    NS.display_errors(data.errors);
+                    NS.display_errors(data.errors, req.form);
                 }
             }
         });
     };
 
-    NS.saveLocation = function() {
-        var storage = window.localStorage;
-        storage.setItem(window.location.pathname, JSON.stringify({"table.page":4,"table.sort":"label"}));
+    return NS;
+
+} (Beaver));
+
+Beaver.Storage = Beaver.Storage || {};
+
+Beaver.Storage = (function(NS) {
+
+    NS.get = function(key) {
+        try {
+            return JSON.parse(window.localStorage.getItem(key)||'[]');
+        }
+        catch (e) {
+            return [];
+        }
+    };
+
+    NS.push = function(key, value) {
+        var stored = NS.get(key);
+        stored.push(value);
+        window.localStorage.setItem(key, JSON.stringify(stored));
+    };
+    
+    NS.pop = function(key) {
+        var stored = NS.get(key);
+        var value = stored.pop();
+        window.localStorage.setItem(key, JSON.stringify(stored));
+        return value;
     };
 
     return NS;
 
-} (Beaver));
+} (Beaver.Storage));
 
 $(function(){
     // form submit buttons
@@ -142,7 +193,6 @@ $(function(){
         });
         // save current page parameters to web-storage
         // TODO
-        Beaver.saveLocation();
     }
     $('[data-submit]').on('click', function(){
         var el = $(this);
@@ -159,4 +209,6 @@ $(function(){
             submitter(el);
         }
     });
+    // save current location
+    Beaver.pushStorage(window.location.pathname, window.location.search);
 });

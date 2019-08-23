@@ -13,7 +13,7 @@ __DATA__
 
 @@ widgets/form-input.html.ep
 <div class="<%= $wg->field_class %>">
-<label for="<%= $wg->oid %>"><%= $wg->props->{label} %></label>
+<label class="control-label" for="<%= $wg->oid %>"><%= $wg->props->{label} %></label>
 %   if ($wg->props->{readonly}) {
 <div><%= $wg->attrs->{value} %></div>
 %   }

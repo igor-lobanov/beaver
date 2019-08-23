@@ -10,7 +10,8 @@ my $pg;
 
 sub init {
     my $m = shift;
-    $m->pg($pg ||= $m->app->connect($m->backend));
+    $pg = $m->app->connect($m->backend) if !($pg && $pg->db->ping);
+    $m->pg($pg);
     $m->db($pg->db);
     $m->sql($pg->abstract);
     $m;
@@ -69,9 +70,13 @@ sub list {
         $e->{$_} = $$opts{add_fields}{$_}->($e) for keys %{$$opts{add_fields}}
     }) if $$opts{add_fields};
 
-    $return->count(
-        $m->db->query(qq{ SELECT COUNT(*) AS count FROM $table WHERE fake = 0 })->hash->{count}
-    ) if $$opts{count};
+    if ($$opts{count}) {
+        $return->count(
+            $m->db->query(qq{ SELECT COUNT(*) AS count FROM $table WHERE fake = 0 })->hash->{count}
+        );
+        $return->portion($$opts{portion});
+        $return->start($$opts{start});
+    }
 
     $return->vocs({
         map {
@@ -100,10 +105,13 @@ sub create {
     my $m = shift;
     my $data = $m->_opts(@_);
     $data = { map {$_ => $m->c->data->{$_}} grep {exists $m->c->data->{$_}} $m->columns->each } if !keys %$data;
-    $$data{fake} = $m->c->sid if !exists $$data{fake};
     delete $$data{id};
-
-    my $id = $m->db->insert($m->entity, $data, {returning => 'id'})->hash->{id};
+    my $id;
+    if (!exists $$data{fake}) {
+        $$data{fake} = $m->c->sid;
+        ($id) = @{ $m->db->query(qq{ SELECT id FROM @{[ $m->entity ]} WHERE fake = ? LIMIT 1}, $$data{fake})->hashes->first || {} }{id};
+    }
+    $id ||= $m->db->insert($m->entity, $data, {returning => 'id'})->hash->{id};
     $m->c->id($id) if $m->entity eq $m->c->entity;
     
     $id;

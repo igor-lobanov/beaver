@@ -18,27 +18,35 @@ sub register {
     # Helpers
     # Build URI
     # resulting URI /users/1000/edit
-    # $c->build_uri({entity => 'users', id => 1000, action => 'edit'})
+    # $c->build_url({entity => 'users', id => 1000, action => 'edit'})
     # /users/1000/edit
     # current URI /users/1000/edit
     # result URI /users/1000
-    # $c->build_uri({entity => 'users', id => 1000, action => undef})
+    # $c->build_url({entity => 'users', id => 1000, action => undef})
     # current URI /users/1000/edit
     # result URI /users/export
-    # $c->build_uri({entity => 'users', id => undef, action => 'export'})
-    $app->helper(build_uri => sub {
+    # $c->build_url({entity => 'users', id => undef, action => 'export'})
+    # result URI /users?list.portion=100&list.start=100
+    # $c->build_url({entity => 'users', id => undef, 'list.portion' => 100, 'list.start' => 100})
+    $app->helper(build_url => sub {
         my $c = shift;
         my $param = ref $_[0] eq 'HASH' ? $_[0] : {@_};
-        join '/', '',
+        my $qs = $c->build_query_string({map {$_ => $param->{$_}} grep !/^(entity|id|action)$/, keys %$param});
+        join('/',
+            '',
+            
             exists $param->{entity}
             ? (defined $param->{entity} ? $param->{entity} : $self->cfg->{beaver}{default_entity})
             : $c->entity || $self->cfg->{beaver}{default_entity},
+            
             exists $param->{id}
             ? (defined $param->{id} ? $param->{id} : ())
             : ($c->id ? $c->id : ()),
+            
             exists $param->{action}
             ? (defined $param->{action} ? $param->{action} : ())
             : ($c->action && $c->action !~ /^(?:item|list)$/ ? $c->action : ())
+        ).($qs ? "?$qs" : '');
     });
     $app->helper(build_query_string => sub {
         my $c = shift;

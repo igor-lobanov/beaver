@@ -1,6 +1,5 @@
 % layout 'bootstrap3';
 % title 'Курсы';
-% my $course_types = { map {$_->{id} => $_->{label} } @{ $D->{vocs}{course_types}||[] } };
 <%= widget table => {
     -label      => 'Курсы',
     -buttons    => [
@@ -22,4 +21,9 @@
             $_[0]->{course_type_label},
         ];
     } },
+    -pager      => {
+        -count   => $D->count,
+        -portion => $D->portion,
+        -start   => $D->start,
+    }
 } %>

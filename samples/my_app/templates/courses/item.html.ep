@@ -1,7 +1,7 @@
 % layout 'bootstrap3';
 % title 'School';
 <%= widget form => {
-    -label      => $D->{label},
+    -label      => $D->row->{label},
     -readonly   => 1,
     -buttons    => [
         {
@@ -17,7 +17,7 @@
         {
             -tag        => 'a',
             -context    => 'danger',
-            href        => sub { join '/', '', $_[0]->entity, ($_[0]->action eq 'edit' ? $_[0]->id : ()) },
+            href        => sub { join '/', '', $_[0]->entity, ($_[0]->action eq 'edit' && $D->row->{fake} == 0 ? $_[0]->id : ()) },
             -actions    => [qw(item edit)],
             -label      => 'Назад',
         },
@@ -48,10 +48,11 @@
         [
             'form-select'   => {
                 name    => 'id_course_type',
-                -label  => 'Тип',
+                -label  => 'Тип курса',
                 -col    => {md => 4},
                 _form   => [qw(form-update form-copy)],
                 -values => $D->vocs->{course_types},
+                -placeholder  => 'Выберите из справочника',
             }
         ],
     ]],

@@ -47,7 +47,7 @@
         },
         {
             label   => 'Quit',
-            href    => '#',
+            href    => '/auth/signout',
             section => 'right',
             icon    => [
                 'fas',
@@ -65,10 +65,23 @@
             href => '/',
         },
         {
-            label   => 'Courses',
+            label   => 'Список курсов',
             href    => '/courses',
         },
     ],
+} %>
+<%= widget breadcrumbs => {
+    -items => [
+        {
+            label   => 'Home',
+            href    => '/',
+            icon    => [fas => 'home'],
+        },
+        {
+            label   => 'Список курсов',
+            href    => '/courses',
+        },
+    ]
 } %>
 <%= content %>
 <!-- jQuery and Bootstrap 3 -->
@@ -80,6 +93,11 @@
     js/beaver.sidebar.js
 ), '#1.002') %>"></script>
 <script src="/js/beaver.js"></script>
+%   if ($c->flash('errors')) {
+%       js_onload begin
+Beaver.display_errors(<%= json $c->flash('errors') %>);
+%       end
+%   }
 <%= js_onload %>
 </body>
 

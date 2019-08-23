@@ -38,6 +38,9 @@ my $method_sub_map = {
 sub Handler {
     my $c = shift;
 
+    # session
+    $c->session->{sid} = int(9999999999*rand()) if !$c->session->{sid};
+
     # setup entity and id of request
     $c->entity($c->stash('controller'));
     $c->id($c->stash('id')) if $c->stash('id');
@@ -76,7 +79,7 @@ sub Handler {
     $c->data($data);
 
     # session ID
-    $c->sid(1);
+    $c->sid($c->session->{sid});
 
     $c->model($c->load_model($c->entity)) if !$c->modelless;
 
@@ -90,9 +93,19 @@ sub Handler {
     # validate
     # sub _validate_<action>
     # sub POST_validate_<action>
+    # [{
+    #   field   => 'Field1',
+    #   message => 'Error in field1',
+    # }]
     if (my $sub = $c->can($c->req->method . '_validate_' . $c->action) || $c->can('_validate_' . $c->action)) {
         my $errors = $sub->($c);
-        return $c->req->is_xhr ? $c->render(json => $errors) : $c->render(text => 'error todo') if $errors;
+        $errors = [{alert => {message => $errors}}] if $errors && !ref $errors;
+        $errors = [$errors] if ref $errors eq 'HASH' and keys %$errors;
+        if ($errors && @$errors) {
+            return $c->req->is_xhr
+                ? $c->render(json => {errors => $errors})
+                : $c->flash({errors => $errors})->redirect_to($c->req->headers->header('Referer') || $c->build_url({action => undef}));
+        }
     }
 
     # execute
@@ -128,6 +141,7 @@ sub edit {
 
 sub list {
     my ($c) = @_;
+
     if ($c->modelless) {
         return {data => {}};
     }

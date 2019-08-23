@@ -17,7 +17,7 @@ __DATA__
 
 @@ widgets/form-select.html.ep
 <div class="<%= $wg->field_class %>">
-<label for="<%= $wg->oid %>"><%= $wg->props->{label} %></label>
+<label class="control-label" for="<%= $wg->oid %>"><%= $wg->props->{label} %></label>
 %   if ($wg->props->{readonly}) {
 <div><%= join('; ', map {$_->{label}} grep { $wg->attrs->{value} == $_->{id} } @{ $wg->props->{values} } ) %></div>
 %   }
@@ -25,6 +25,9 @@ __DATA__
 <select <%= $wg->pack_attrs({class => $wg->attrs->{class}}) %>
 <%= $wg->attrs->{'data-form'} ? $wg->pack_attrs({'data-form' => $wg->attrs->{'data-form'}}) : '' %>
 name="<%= $wg->attrs->{name} %>">
+%       if ($wg->props->{placeholder}) {
+<option value=""></option>
+%       }
 %       for my $option ($wg->props->{values}->each) {
 <option <%= $option->{id} == $wg->attrs->{value} ? 'selected' : '' %> value="<%= $option->{id} %>"><%= $option->{label} %></option>
 %       }
@@ -32,6 +35,6 @@ name="<%= $wg->attrs->{name} %>">
 %   }
 </div>
 % js_onload begin
-$(".<%= $wg->oid %>").select2({theme: "bootstrap"});
+$(".<%= $wg->oid %>").select2(<%= json {theme => 'bootstrap', (placeholder => $wg->props->{placeholder}, allowClear => \1) x!! exists $wg->props->{placeholder}} %>);
 % end
 

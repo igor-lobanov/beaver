@@ -3,8 +3,6 @@ package Beaver::Model::Pg::Common;
 use Mojo::Base 'Beaver::Model::Pg';
 use Beaver::Model::Result;
 
-use Data::Dumper;
-
 sub init {
     my $m = shift;
     $m->SUPER::init(@_);
